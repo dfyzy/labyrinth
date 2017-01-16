@@ -27,8 +27,13 @@ public:
 	Door(BoxObject box) : Link(box) {}
 
 	void use(Use u, Link* prev) {
-		if (u == YES)	sprite->setEnabled(false);
-		else				sprite->setEnabled(true);
+		opened = u == YES;
+		if (opened)	sprite->setEnabled(false);
+		else			sprite->setEnabled(true);
+	}
+
+	void collision(BoxObject* box) {
+		if (!opened)	BoxObject::collision(box);
 	}
 
 };

@@ -32,6 +32,8 @@ public:
 		Link::use(u, this);
 	}
 
+	void collision(BoxObject* box);
+
 };
 
 #endif

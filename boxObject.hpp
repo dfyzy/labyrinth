@@ -21,10 +21,22 @@ public:
 	BoxObject(const SimpleTexture& texture, SimpleVector position, int z, SimpleColor color)
 					: BoxObject(texture, position, z, {(float)texture.getWidth(), (float)texture.getHeight()}, color) {}
 
+	BoxObject() {}
+
 	SimpleVector getPosition() const { return position; }
 	void setPosition(SimpleVector sv) { position = sv; updateSprite(); }
 
 	SimpleVector getBounds() const { return bounds; }
+
+	virtual void collision(BoxObject* box) {
+		SimpleVector diff = position - box->position;
+		SimpleVector offs = diff.abs() - (bounds + box->bounds)/2;
+
+		if (offs.x <= 0 && offs.y <= 0) {
+			if (offs.x > offs.y)	box->position.x -= copysign(offs.x, diff.x);
+			else						box->position.y -= copysign(offs.y, diff.y);
+		}
+	}
 
 };
 

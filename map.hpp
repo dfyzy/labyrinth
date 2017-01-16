@@ -46,9 +46,7 @@ private:
 	WireLoader wireLoader;
 	AdderLoader adderLoader;
 
-	std::list<BoxObject> walls;
-	std::list<Door> doors;
-	std::list<Switch> switches;
+	std::list<BoxObject*> objects;
 
 	SimpleVector cursor;
 
@@ -58,32 +56,32 @@ private:
 		bool vert = dir == NORTH || dir == SOUTH;
 		float rot = HALF_PI*dir;
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(-ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH));
-		walls.push_back(wallLoader.load(pos + SimpleVector(ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH));
-		walls.push_back(wallLoader.load(pos + SimpleVector(0, -ROOM_OFFSET).rotate(rot), !vert, REAL_CELL_SIZE));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(0, -ROOM_OFFSET).rotate(rot), !vert, REAL_CELL_SIZE)));
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(-SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN)));
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN)));
 	}
 
 	void room2horiz(SimpleVector pos) {
 		pos *= CELL_SIZE;
 
-		walls.push_back(wallLoader.load(pos - SimpleVector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH));
-		walls.push_back(wallLoader.load(pos + SimpleVector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH)));
 
-		walls.push_back(wallLoader.load(pos - SimpleVector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN));
-		walls.push_back(wallLoader.load(pos - SimpleVector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
 
-		walls.push_back(wallLoader.load(pos - SimpleVector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN));
-		walls.push_back(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
 	}
 
 	void corridor1(SimpleVector pos, Direction dir) {
@@ -92,10 +90,10 @@ private:
 		bool vert = dir == NORTH || dir == SOUTH;
 		float rot = HALF_PI*dir;
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN)));
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(0, -CORR_OFFSET).rotate(rot), !vert, DOOR_LENGTH + 2*WALL_WIDTH));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(0, -CORR_OFFSET).rotate(rot), !vert, DOOR_LENGTH + 2*WALL_WIDTH)));
 	}
 
 	void corridor2(SimpleVector pos, bool vert) {
@@ -103,8 +101,8 @@ private:
 
 		SimpleVector offset = vert ? SimpleVector(CORR_OFFSET, 0) : SimpleVector(0, CORR_OFFSET);
 
-		walls.push_back(wallLoader.load(pos - offset, vert, CELL_SIZE));
-		walls.push_back(wallLoader.load(pos + offset, vert, CELL_SIZE));
+		objects.push_back(new BoxObject(wallLoader.load(pos - offset, vert, CELL_SIZE)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + offset, vert, CELL_SIZE)));
 	}
 
 	void corridorG(SimpleVector pos, Direction dir) {
@@ -116,11 +114,11 @@ private:
 			if (dir != WEST)	factor.x = -1;
 		}
 
-		walls.push_back(wallLoader.load(pos + factor*SimpleVector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos + factor*SimpleVector(-CORR_BIG_OFFSET, -CORR_OFFSET), false, CORR_BIG_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + factor*SimpleVector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + factor*SimpleVector(-CORR_BIG_OFFSET, -CORR_OFFSET), false, CORR_BIG_LEN)));
 
-		walls.push_back(wallLoader.load(pos + factor*SimpleVector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos + factor*SimpleVector(CORR_OFFSET, CORR_BIG_OFFSET), true, CORR_BIG_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + factor*SimpleVector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + factor*SimpleVector(CORR_OFFSET, CORR_BIG_OFFSET), true, CORR_BIG_LEN)));
 	}
 
 	void corridor3(SimpleVector pos, Direction dir) {
@@ -129,40 +127,42 @@ private:
 		bool vert = dir == NORTH || dir == SOUTH;
 		float rot = HALF_PI*dir;
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(0, CORR_OFFSET).rotate(rot), !vert, CELL_SIZE));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(0, CORR_OFFSET).rotate(rot), !vert, CELL_SIZE)));
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(-CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN)));
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN)));
 	}
 
 	void corridor4(SimpleVector pos) {
 		pos *= CELL_SIZE;
 
-		walls.push_back(wallLoader.load(pos + SimpleVector(CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(-CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos + SimpleVector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN)));
 
-		walls.push_back(wallLoader.load(pos - SimpleVector(CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos - SimpleVector(CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN));
-		walls.push_back(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
+		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
 	}
 
 	Door* door(SimpleVector pos, Direction dir, bool longOffset) {
 		pos *= CELL_SIZE;
 
 		bool vert = dir == WEST || dir == EAST;
-		doors.emplace_back(doorLoader.load(pos + SimpleVector(0, longOffset ? ROOM_OFFSET : CORR_OFFSET).rotate(HALF_PI*dir), vert));
-		return &(*--doors.end());
+		Door* res = new Door(doorLoader.load(pos + SimpleVector(0, longOffset ? ROOM_OFFSET : CORR_OFFSET).rotate(HALF_PI*dir), vert));
+		objects.push_back(res);
+		return res;
 	}
 
 	Switch* swtch(SimpleVector pos, SimpleVector offset, bool type) {
-		switches.emplace_back(switchLoader.load(pos*CELL_SIZE + offset), type);
-		return &(*--switches.end());
+		Switch* res = new Switch(switchLoader.load(pos*CELL_SIZE + offset), type);
+		objects.push_back(res);
+		return res;
 	}
 
 	Wire* wire(bool vert, float length) {
@@ -395,7 +395,7 @@ public:
 			wire(w, door({6, 7}, NORTH, false), true);
 
 		add = adder({2, 9}, {-SWITCH_SMALL_OFFSET, 0});
-		wireStart(swtch({2, 9}, {SWITCH_SMALL_OFFSET, 0}, true), add, false);
+		wireStart(swtch({2, 9}, {SWITCH_SMALL_OFFSET, 0}, false), add, false);
 
 		w = wireStart(swtch({0, 10}, {-SWITCH_SMALL_OFFSET, 0}, true), false, 2*CELL_SIZE);
 			wire(w, add, true);
@@ -439,6 +439,10 @@ public:
 			wire(w, door({10, 8}, NORTH, false), true);
 	}
 
+	void collision(BoxObject* box) {
+		for (BoxObject* b : objects)
+			b->collision(box);
+	}
 
 };
 

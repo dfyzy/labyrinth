@@ -33,8 +33,11 @@ public:
 
 	void use(Use u, Link* prev) {
 		bool current;
-		if (links[0] == prev)	current = 0;
-		else							current = 1;
+		for (int i = 0; i < 2; i++) {
+			if (links[i] == nullptr)	links[i] = prev;
+			if (links[i] == prev) { current = i; break; }
+		}
+
 		uses[current] = u;
 
 		for (int i = 0; i < 2; i++)
