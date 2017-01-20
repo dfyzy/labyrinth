@@ -3,6 +3,7 @@
 
 #include "link.hpp"
 #include "wall.hpp"
+#include "target.hpp"
 
 const float DOOR_LENGTH = 60;
 
@@ -19,7 +20,7 @@ public:
 
 };
 
-class Door : public Link {
+class Door : public Link, public Target {
 private:
 	bool opened {false};
 
@@ -32,9 +33,11 @@ public:
 		else			sprite->setEnabled(true);
 	}
 
-	void collision(BoxObject* box) {
-		if (!opened)	BoxObject::collision(box);
+	void targ(bool b) {
+		use(b ? YES : NO, this);
 	}
+
+	void collision(BoxObject* box);
 
 };
 

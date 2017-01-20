@@ -8,7 +8,8 @@ const float USE_RADIUS = 70;
 GLFWwindow* window;
 
 Player player;
-Switch* currentSwitch = nullptr;
+Target* currentTarget = nullptr;
+Target* lastTarget = nullptr;
 float currentDistance = 0;
 
 int lastX = 0, lastY = 0;
@@ -18,19 +19,56 @@ void Switch::collision(BoxObject* box) {
 
 	float distance = simpleMath::distance(box->getPosition(), position);
 	if (distance < USE_RADIUS) {
-		if (currentSwitch == nullptr || distance < currentDistance) {
-			currentSwitch = this;
+		if (currentTarget == nullptr || distance < currentDistance) {
+			currentTarget = this;
 			currentDistance = distance;
 		}
-	} else if (currentSwitch == this)	currentSwitch = nullptr;
+	} else if (currentTarget == this)	currentTarget = nullptr;
+}
+
+void Door::collision(BoxObject* box) {
+	if (!opened)	BoxObject::collision(box);
+
+	if (player.getOwn() == KEY) {
+		bool current = currentTarget == this;
+
+		float distance = simpleMath::distance(box->getPosition(), position);
+		if (distance < USE_RADIUS) {
+			if (currentTarget == nullptr || distance < currentDistance) {
+				currentTarget = this;
+				currentDistance = distance;
+			}
+		} else if (current) currentTarget = nullptr;
+
+		if (current && currentTarget != this && lastTarget == this)
+			targ(false);
+	}
+}
+
+void ItemObject::collision(BoxObject* box) {
+	float distance = simpleMath::distance(box->getPosition(), position);
+	if (distance < USE_RADIUS) {
+		if (currentTarget == nullptr || distance < currentDistance) {
+			currentTarget = this;
+			currentDistance = distance;
+		}
+	} else if (currentTarget == this)	currentTarget = nullptr;
+}
+
+void ItemObject::targ(bool b) {
+	Item i = player.getOwn();
+	player.setOwn(item);
+	change(i);
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_ESCAPE)
 			glfwSetWindowShouldClose(window, GL_TRUE);
-		if (key == GLFW_KEY_E && currentSwitch)
-			currentSwitch->use();
+		if (key == GLFW_KEY_E && currentTarget) {
+			currentTarget->targ(true);
+			lastTarget = currentTarget;
+		}
 	}
 }
 
@@ -63,6 +101,7 @@ int main() {
 	PersonLoader persLoader;
 	player = Player(persLoader.load({CELL_SIZE*5, 0}), &map);
 
+	//simpleGL::setCameraPosition({CELL_SIZE*5});
 	//simpleGL::setCameraScale(768/(11*CELL_SIZE));
 
 	simpleGL::setUpdate(update);

@@ -32,13 +32,10 @@ public:
 	}
 
 	void use(Use u, Link* prev) {
-		bool current;
 		for (int i = 0; i < 2; i++) {
 			if (links[i] == nullptr)	links[i] = prev;
-			if (links[i] == prev) { current = i; break; }
+			if (links[i] == prev) {		uses[i] = u; break; }
 		}
-
-		uses[current] = u;
 
 		for (int i = 0; i < 2; i++)
 			if (uses[i] == OFF) {

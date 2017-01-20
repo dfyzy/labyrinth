@@ -2,6 +2,7 @@
 #define SWITCH_H
 
 #include "link.hpp"
+#include "target.hpp"
 
 const float SWITCH_SIZE = 20;
 
@@ -18,7 +19,7 @@ public:
 
 };
 
-class Switch : public Link {
+class Switch : public Link, public Target {
 private:
 	const bool type;
 	bool switched {false};
@@ -26,10 +27,10 @@ private:
 public:
 	Switch(BoxObject box, bool type) : Link(box), type(type) {}
 
-	void use() {
+	void targ(bool b) {
 		Use u = switched ? OFF : (type ? YES : NO);
 		switched = !switched;
-		Link::use(u, this);
+		use(u, this);
 	}
 
 	void collision(BoxObject* box);

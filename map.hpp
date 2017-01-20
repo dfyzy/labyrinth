@@ -8,6 +8,7 @@
 #include "switch.hpp"
 #include "wire.hpp"
 #include "adder.hpp"
+#include "item.hpp"
 
 const float HALF_PI = 1.57079632679f;
 
@@ -30,25 +31,45 @@ const float CORR_SMALL_OFFSET = (CELL_SIZE - CORR_SMALL_LEN)/2;
 const float CORR_BIG_LEN = (CELL_SIZE + DOOR_LENGTH)/2 + WALL_WIDTH;
 const float CORR_BIG_OFFSET = (CELL_SIZE - CORR_BIG_LEN)/2;
 
+const float FOG_LEN = CORR_SMALL_LEN - WALL_WIDTH;
+const float FOG_OFFSET = (CELL_SIZE - FOG_LEN)/2;
+
 const float SWITCH_MARGIN = 5;
 const float SWITCH_BIG_OFFSET = ROOM_OFFSET - (WALL_WIDTH + SWITCH_SIZE)/2 - SWITCH_MARGIN;
 const float SWITCH_SMALL_OFFSET = (DOOR_LENGTH - SWITCH_SIZE)/2 - SWITCH_MARGIN;
 
 const float WIRE_MARGIN = 5;
 
+const float TORCH_MARGIN = 5;
+
+const float TORCH_BIG_OFFSET = ROOM_OFFSET - WALL_WIDTH/2 - TORCH_MARGIN;
+const float TORCH_SMALL_OFFSET = DOOR_LENGTH/2 - TORCH_MARGIN;
+
 class Map {
 private:
 	enum Direction { NORTH, WEST, SOUTH, EAST };
+
+	SimpleLight* light = new SimpleLight({5*CELL_SIZE}, -50, 11*CELL_SIZE, 11*CELL_SIZE, {0});
+	GLuint lampShader = simpleGL::loadShaderPath("shaders/lamp.glsl", GL_FRAGMENT_SHADER);
 
 	WallLoader wallLoader;
 	DoorLoader doorLoader;
 	SwitchLoader switchLoader;
 	WireLoader wireLoader;
 	AdderLoader adderLoader;
+	ItemLoader itemLoader;
 
 	std::list<BoxObject*> objects;
 
 	SimpleVector cursor;
+
+	inline void fog(SimpleVector position, SimpleVector bounds) {
+		SimpleSprite::Loader({}).position(position).z(-100).bounds(bounds/100).color({0}).load();
+	}
+
+	inline void empty(SimpleVector pos) {
+		fog(pos*CELL_SIZE, {CELL_SIZE});
+	}
 
 	void room1(SimpleVector pos, Direction dir) {
 		pos *= CELL_SIZE;
@@ -65,6 +86,12 @@ private:
 
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN)));
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN)));
+
+		fog(pos + SimpleVector(OFF_Y, 0).rotate(rot), SimpleVector(ROOM_MARGIN, CELL_SIZE).rotate(rot));
+		fog(pos + SimpleVector(-OFF_Y, 0).rotate(rot), SimpleVector(ROOM_MARGIN, CELL_SIZE).rotate(rot));
+		fog(pos + SimpleVector(0, -OFF_Y).rotate(rot), SimpleVector(CELL_SIZE, ROOM_MARGIN).rotate(rot));
+		fog(pos + SimpleVector(FOG_OFFSET, OFF_Y).rotate(rot), SimpleVector(FOG_LEN, ROOM_MARGIN).rotate(rot));
+		fog(pos + SimpleVector(-FOG_OFFSET, OFF_Y).rotate(rot), SimpleVector(FOG_LEN, ROOM_MARGIN).rotate(rot));
 	}
 
 	void room2horiz(SimpleVector pos) {
@@ -82,6 +109,13 @@ private:
 		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
+
+		fog(pos + SimpleVector(OFF_Y, 0), {ROOM_MARGIN, CELL_SIZE});
+		fog(pos + SimpleVector(-OFF_Y, 0), {ROOM_MARGIN, CELL_SIZE});
+		fog(pos + SimpleVector(FOG_OFFSET, OFF_Y), {FOG_LEN, ROOM_MARGIN});
+		fog(pos + SimpleVector(FOG_OFFSET, -OFF_Y), {FOG_LEN, ROOM_MARGIN});
+		fog(pos + SimpleVector(-FOG_OFFSET, OFF_Y), {FOG_LEN, ROOM_MARGIN});
+		fog(pos + SimpleVector(-FOG_OFFSET, -OFF_Y), {FOG_LEN, ROOM_MARGIN});
 	}
 
 	void corridor1(SimpleVector pos, Direction dir) {
@@ -94,15 +128,34 @@ private:
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN)));
 
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(0, -CORR_OFFSET).rotate(rot), !vert, DOOR_LENGTH + 2*WALL_WIDTH)));
+
+		fog(pos + SimpleVector(FOG_OFFSET, 0).rotate(rot), SimpleVector(FOG_LEN, CELL_SIZE).rotate(rot));
+		fog(pos + SimpleVector(-FOG_OFFSET, 0).rotate(rot), SimpleVector(FOG_LEN, CELL_SIZE).rotate(rot));
+		fog(pos + SimpleVector(0, -FOG_OFFSET).rotate(rot), SimpleVector(DOOR_LENGTH + 2*WALL_WIDTH, FOG_LEN).rotate(rot));
 	}
 
 	void corridor2(SimpleVector pos, bool vert) {
 		pos *= CELL_SIZE;
 
-		SimpleVector offset = vert ? SimpleVector(CORR_OFFSET, 0) : SimpleVector(0, CORR_OFFSET);
+		SimpleVector offset;
+		SimpleVector fogOff;
+		SimpleVector fogBounds;
+
+		if (vert) {
+			offset = SimpleVector(CORR_OFFSET, 0);
+			fogOff = SimpleVector(FOG_OFFSET, 0);
+			fogBounds = SimpleVector(FOG_LEN, CELL_SIZE);
+		} else {
+			offset = SimpleVector(0, CORR_OFFSET);
+			fogOff = SimpleVector(0, FOG_OFFSET);
+			fogBounds = SimpleVector(CELL_SIZE, FOG_LEN);
+		}
 
 		objects.push_back(new BoxObject(wallLoader.load(pos - offset, vert, CELL_SIZE)));
 		objects.push_back(new BoxObject(wallLoader.load(pos + offset, vert, CELL_SIZE)));
+
+		fog(pos - fogOff, fogBounds);
+		fog(pos + fogOff, fogBounds);
 	}
 
 	void corridorG(SimpleVector pos, Direction dir) {
@@ -119,6 +172,10 @@ private:
 
 		objects.push_back(new BoxObject(wallLoader.load(pos + factor*SimpleVector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
 		objects.push_back(new BoxObject(wallLoader.load(pos + factor*SimpleVector(CORR_OFFSET, CORR_BIG_OFFSET), true, CORR_BIG_LEN)));
+
+		fog(pos + factor*SimpleVector(-FOG_OFFSET, FOG_OFFSET), {FOG_LEN});
+		fog(pos + factor*SimpleVector(FOG_OFFSET, 0), {FOG_LEN, CELL_SIZE});
+		fog(pos + factor*SimpleVector(0, -FOG_OFFSET), {CELL_SIZE, FOG_LEN});
 	}
 
 	void corridor3(SimpleVector pos, Direction dir) {
@@ -134,6 +191,10 @@ private:
 
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN)));
 		objects.push_back(new BoxObject(wallLoader.load(pos + SimpleVector(-CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN)));
+
+		fog(pos + SimpleVector(FOG_OFFSET, -FOG_OFFSET).rotate(rot), {FOG_LEN});
+		fog(pos + SimpleVector(-FOG_OFFSET, -FOG_OFFSET).rotate(rot), {FOG_LEN});
+		fog(pos + SimpleVector(0, FOG_OFFSET).rotate(rot), SimpleVector(CELL_SIZE, FOG_LEN).rotate(rot));
 	}
 
 	void corridor4(SimpleVector pos) {
@@ -148,6 +209,11 @@ private:
 		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
 		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
 		objects.push_back(new BoxObject(wallLoader.load(pos - SimpleVector(-CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
+
+		fog(pos + SimpleVector(FOG_OFFSET, FOG_OFFSET), {FOG_LEN});
+		fog(pos + SimpleVector(FOG_OFFSET, -FOG_OFFSET), {FOG_LEN});
+		fog(pos + SimpleVector(-FOG_OFFSET, FOG_OFFSET), {FOG_LEN});
+		fog(pos + SimpleVector(-FOG_OFFSET, -FOG_OFFSET), {FOG_LEN});
 	}
 
 	Door* door(SimpleVector pos, Direction dir, bool longOffset) {
@@ -205,58 +271,58 @@ private:
 
 public:
 	Map() {
-		room2horiz({5, 0});
-		corridor2({5, 1}, true);
-		room2horiz({5, 2});
-		corridor4({5, 3});
-			corridorG({6, 3}, WEST);
-			corridorG({6, 2}, EAST);
-			corridor1({7, 2}, WEST);
+		room2horiz({5, 0});			torch({5, 0}, 400);
+		corridor2({5, 1}, true);	torch({5, 1}, 300);
+		room2horiz({5, 2});			torch({5, 2}, 400);
+		corridor4({5, 3});			torch({5, 3}, 400);	objects.push_back(new ItemObject(itemLoader.load(SimpleVector(5, 3)*CELL_SIZE)));
+			corridorG({6, 3}, WEST);	torch({6, 3}, 350);
+			corridorG({6, 2}, EAST);	torch({6, 2}, 300);
+			corridor1({7, 2}, WEST);	torch({7, 2}, 350);
 
-			corridor2({4, 3}, false);
-			corridor2({3, 3}, false);
-			corridor3({2, 3}, NORTH);
-				corridor2({2, 2}, true);
-				corridorG({2, 1}, NORTH);
-				corridor2({1, 1}, false);
-				room1({0, 1}, EAST);
+			corridor2({4, 3}, false);	torch({4, 3}, 350);
+			corridor2({3, 3}, false);	torch({3, 3}, 350);
+			corridor3({2, 3}, NORTH);	torch({2, 3}, 350);
+				corridor2({2, 2}, true);	torch({2, 2}, 350);
+				corridorG({2, 1}, NORTH);	torch({2, 1}, 350);
+				corridor2({1, 1}, false);	torch({1, 1}, 300);
+				room1({0, 1}, EAST);			torch({0, 1}, 400);
 
-				corridor2({1, 3}, false);
-				corridorG({0, 3}, EAST);
-				corridor2({0, 4}, true);
-				room1({0, 5}, SOUTH);
+				corridor2({1, 3}, false);	torch({1, 3}, 350);
+				corridorG({0, 3}, EAST);	torch({0, 3}, 350);
+				corridor2({0, 4}, true);	torch({0, 4}, 300);
+				room1({0, 5}, SOUTH);		torch({0, 5}, 400);
 
-			corridor2({5, 4}, true);
-			corridor4({5, 5});
-				corridor2({5, 6}, true);
-				corridor2({5, 7}, true);
-				room1({5, 8}, SOUTH);
+			corridor2({5, 4}, true);		torch({5, 4}, 350);
+			corridor4({5, 5});				torch({5, 5}, 400);
+				corridor2({5, 6}, true);	torch({5, 6}, 350);
+				corridor2({5, 7}, true);	torch({5, 7}, 300);
+				room1({5, 8}, SOUTH);		torch({5, 8}, 400);
 
-				corridorG({4, 5}, SOUTH);
-				corridorG({4, 4}, NORTH);
-				corridor2({3, 4}, false);
-				corridor2({2, 4}, false);
-				corridorG({1, 4}, EAST);
-				corridor2({1, 5}, true);
-				corridor2({1, 6}, true);
-				corridor3({1, 7}, NORTH);
+				corridorG({4, 5}, SOUTH);	torch({4, 5}, 350);
+				corridorG({4, 4}, NORTH);	torch({4, 4}, 350);
+				corridor2({3, 4}, false);	torch({3, 4}, 350);
+				corridor2({2, 4}, false);	torch({2, 4}, 350);
+				corridorG({1, 4}, EAST);	torch({1, 4}, 350);
+				corridor2({1, 5}, true);	torch({1, 5}, 300);
+				corridor2({1, 6}, true);	torch({1, 6}, 300);
+				corridor3({1, 7}, NORTH);	torch({1, 7}, 350);
 					corridorG({0, 7}, EAST);
 					corridor3({0, 8}, WEST);
 						corridor2({1, 8}, false);
-						corridor1({2, 8}, WEST);
+						corridor1({2, 8}, WEST);	torch({2, 8}, 300);
 
 						corridorG({0, 9}, SOUTH);
 						corridor2({1, 9}, false);
-						corridor1({2, 9}, WEST);
+						corridor1({2, 9}, WEST);	torch({2, 9}, 300);
 
 					corridor2({2, 7}, false);
 					corridor3({3, 7}, NORTH);
 						corridor2({3, 6}, true);
 						corridorG({3, 5}, NORTH);
 						corridorG({2, 5}, EAST);
-						room1({2, 6}, SOUTH);
+						room1({2, 6}, SOUTH);		torch({2, 6}, 300);
 
-					corridorG({4, 7}, NORTH);
+					corridorG({4, 7}, NORTH);		torch({4, 7}, 200);
 					corridor3({4, 8}, EAST);
 						corridorG({3, 8}, EAST);
 						corridor1({3, 9}, SOUTH);
@@ -268,21 +334,21 @@ public:
 						corridor2({1, 10}, false);
 						corridor1({0, 10}, EAST);
 
-				corridor3({6, 5}, NORTH);
-					corridorG({6, 4}, EAST);
-					corridorG({7, 4}, WEST);
-					corridor1({7, 3}, NORTH);
+				corridor3({6, 5}, NORTH);		torch({6, 5}, 350);
+					corridorG({6, 4}, EAST);	torch({6, 4}, 350);
+					corridorG({7, 4}, WEST);	torch({7, 4}, 350);
+					corridor1({7, 3}, NORTH);	torch({7, 3}, 350);
 
 					corridor2({7, 5}, false);
-					corridor3({8, 5}, EAST);
+					corridor3({8, 5}, EAST);	torch({8, 5}, 200);
 						corridor3({8, 6}, EAST);
 						corridor2({7, 6}, false);
 						corridorG({6, 6}, EAST);
-						corridor2({6, 7}, true);
+						corridor2({6, 7}, true);	torch({6, 7}, 200);
 						corridorG({6, 8}, SOUTH);
 						corridor2({7, 8}, false);
 						corridorG({8, 8}, WEST);
-						room2horiz({8, 7});
+						room2horiz({8, 7});			torch({8, 7}, 300);
 
 						corridor2({8, 4}, true);
 						corridor2({8, 3}, true);
@@ -307,7 +373,7 @@ public:
 								corridor2({10, 5}, true);
 								corridor3({10, 6}, EAST);
 									corridorG({9, 6}, EAST);
-									corridor2({9, 7}, true);
+									corridor2({9, 7}, true);	torch({9, 7}, 200);
 									corridor2({9, 8}, true);
 									corridor1({9, 9}, SOUTH);
 
@@ -324,7 +390,11 @@ public:
 										corridor2({7, 9}, false);
 										corridor2({6, 9}, false);
 										corridorG({5, 9}, EAST);
-										room2horiz({5, 10});
+										room2horiz({5, 10});			torch({5, 10}, 400);
+
+		empty({0, 0}); empty({1, 0}); empty({2, 0}); empty({3, 0}); empty({4, 0}); empty({6, 0}); empty({7, 0}); empty({3, 1});
+		empty({4, 1}); empty({6, 1}); empty({0, 2}); empty({1, 2}); empty({3, 2}); empty({4, 2}); empty({0, 6}); empty({4, 6}); empty({7, 7});
+
 
 		Link* w = wireStart(swtch({5, 2}, {SWITCH_BIG_OFFSET}, true), false, -SWITCH_BIG_OFFSET);
 			w = wire(w, door({5, 2}, NORTH, true), true);
@@ -344,7 +414,7 @@ public:
 			w = wire(add, false, 2*CELL_SIZE - SWITCH_BIG_OFFSET - 2*WIRE_MARGIN);
 			w = wire(w, true, 2*CELL_SIZE + WIRE_MARGIN);
 			w = wire(w, false, 3*CELL_SIZE + 2*WIRE_MARGIN);
-			wire(w, door({5, 3}, NORTH, false), true);
+			wire(w, door({5, 3}, NORTH, true), true);
 
 
 		add = adder({0, 5}, {0, SWITCH_BIG_OFFSET});
@@ -422,7 +492,7 @@ public:
 		w = wireStart(sw, false, SWITCH_BIG_OFFSET);
 			wire(w, add, true);
 			wire(add, door({8, 7}, SOUTH, true), true);
-		sw->use();
+		sw->targ(true);
 
 		sw = swtch({8, 7}, {SWITCH_BIG_OFFSET, -SWITCH_BIG_OFFSET + SWITCH_SIZE}, false);
 		wireStart(sw, add, false);
@@ -437,6 +507,12 @@ public:
 		w = wireStart(swtch({9, 9}, {0, SWITCH_SMALL_OFFSET}, true), true, -SWITCH_SMALL_OFFSET - 3*CELL_SIZE);
 			w = wire(w, false, CELL_SIZE);
 			wire(w, door({10, 8}, NORTH, false), true);
+	}
+
+	SimpleLight::Source* torch(SimpleVector pos, float brightness) {
+		auto t = new SimpleLight::Source(light, pos*CELL_SIZE, {brightness}, 0, {0.65f, 0.5f, 0.3f});
+		t->setFragmentShader(lampShader);
+		return t;
 	}
 
 	void collision(BoxObject* box) {

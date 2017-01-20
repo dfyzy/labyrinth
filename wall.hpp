@@ -13,7 +13,7 @@ public:
 	WallLoader() {}
 
 	BoxObject load(SimpleVector position, bool vert, float length) {
-		return BoxObject(texture, position, 0, vert ? SimpleVector(WALL_WIDTH, length) : SimpleVector(length, WALL_WIDTH), {0});
+		return BoxObject(texture, position, 0, vert ? SimpleVector(WALL_WIDTH, length) : SimpleVector(length, WALL_WIDTH), {0.2f});
 	}
 
 };
