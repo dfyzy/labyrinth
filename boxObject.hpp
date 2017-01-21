@@ -13,9 +13,7 @@ protected:
 
 public:
 	BoxObject(const SimpleTexture& texture, SimpleVector position, int z, SimpleVector bounds, SimpleColor color) : position(position), bounds(bounds) {
-		sprite = SimpleSprite::Loader(texture).position(position).z(z).bounds(
-																							bounds/SimpleVector(texture.getWidth(), texture.getHeight())
-																						).color(color).load();
+		sprite = SimpleSprite::Loader(texture).position(position).z(z).texBounds(bounds).color(color).load();
 	}
 
 	BoxObject(const SimpleTexture& texture, SimpleVector position, int z, SimpleColor color)

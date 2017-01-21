@@ -14,16 +14,26 @@ float currentDistance = 0;
 
 int lastX = 0, lastY = 0;
 
+void checkProximity(float distance, Target* target, bool check) {
+	if (distance < USE_RADIUS) {
+		if (check && (currentTarget == nullptr || distance < currentDistance)) {
+			if (currentTarget != target) {
+				if (currentTarget)	currentTarget->setEnabled(false);
+				target->setEnabled(true);
+				currentTarget = target;
+			}
+			currentDistance = distance;
+		}
+	} else if (currentTarget == target) {
+		target->setEnabled(false);
+		currentTarget = nullptr;
+	}
+}
+
 void Switch::collision(BoxObject* box) {
 	BoxObject::collision(box);
 
-	float distance = simpleMath::distance(box->getPosition(), position);
-	if (distance < USE_RADIUS) {
-		if (currentTarget == nullptr || distance < currentDistance) {
-			currentTarget = this;
-			currentDistance = distance;
-		}
-	} else if (currentTarget == this)	currentTarget = nullptr;
+	checkProximity(simpleMath::distance(box->getPosition(), position), this, true);
 }
 
 void Door::collision(BoxObject* box) {
@@ -31,28 +41,18 @@ void Door::collision(BoxObject* box) {
 
 	if (player.getOwn() == KEY) {
 		bool current = currentTarget == this;
+		bool last = lastTarget == this;
 
-		float distance = simpleMath::distance(box->getPosition(), position);
-		if (distance < USE_RADIUS) {
-			if (currentTarget == nullptr || distance < currentDistance) {
-				currentTarget = this;
-				currentDistance = distance;
-			}
-		} else if (current) currentTarget = nullptr;
+		checkProximity(simpleMath::distance(box->getPosition(), position), this, last || !opened);
 
-		if (current && currentTarget != this && lastTarget == this)
+		if (current && currentTarget != this)
 			targ(false);
 	}
 }
 
 void ItemObject::collision(BoxObject* box) {
-	float distance = simpleMath::distance(box->getPosition(), position);
-	if (distance < USE_RADIUS) {
-		if (currentTarget == nullptr || distance < currentDistance) {
-			currentTarget = this;
-			currentDistance = distance;
-		}
-	} else if (currentTarget == this)	currentTarget = nullptr;
+
+	checkProximity(simpleMath::distance(box->getPosition(), position), this, true);
 }
 
 void ItemObject::targ(bool b) {

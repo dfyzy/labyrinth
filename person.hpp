@@ -13,7 +13,7 @@ public:
 	PersonLoader() {}
 
 	BoxObject load(SimpleVector position) {
-		return BoxObject(texture, position, 0, {PERSON_SIZE}, {1});
+		return BoxObject(texture, position, 0, {PERSON_SIZE}, {0.5f});
 	}
 
 };

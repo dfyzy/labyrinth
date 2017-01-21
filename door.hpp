@@ -25,7 +25,7 @@ private:
 	bool opened {false};
 
 public:
-	Door(BoxObject box) : Link(box) {}
+	Door(BoxObject box) : Link(box), Target(position, bounds + SimpleVector(6)) {}
 
 	void use(Use u, Link* prev) {
 		opened = u == YES;

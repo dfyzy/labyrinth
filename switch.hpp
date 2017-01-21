@@ -25,7 +25,7 @@ private:
 	bool switched {false};
 
 public:
-	Switch(BoxObject box, bool type) : Link(box), type(type) {}
+	Switch(BoxObject box, bool type) : Link(box), Target(position, bounds + SimpleVector(6)), type(type) {}
 
 	void targ(bool b) {
 		Use u = switched ? OFF : (type ? YES : NO);

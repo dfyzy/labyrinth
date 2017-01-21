@@ -6,17 +6,17 @@
 
 enum Item { LAMP, KEY };
 
-const float ITEM_SIZE = 10;
+const float ITEM_SIZE = 20;
 
 class ItemLoader {
 private:
-	const SimpleTexture texture;
+	const SimpleTexture texture {"assets/items.png"};
 
 public:
 	ItemLoader() {}
 
 	BoxObject load(SimpleVector position) {
-		return BoxObject(texture, position, 0, {ITEM_SIZE}, {0, 0, 1});
+		return BoxObject(texture, position, 0, {ITEM_SIZE}, {1});
 	}
 };
 
@@ -25,11 +25,13 @@ private:
 	Item item {KEY};
 
 public:
-	ItemObject(BoxObject box) : BoxObject(box) {}
+	ItemObject(BoxObject box) : BoxObject(box), Target(position, bounds) {
+		sprite->setTexPosition({ITEM_SIZE, 0});
+	}
 
 	void change(Item i) {
-		if (i == KEY)	sprite->setColor({0, 0, 1});
-		else				sprite->setColor({0.6f, 0.5f, 0});
+		if (i == KEY)	sprite->setTexPosition({ITEM_SIZE, 0});
+		else				sprite->setTexPosition({0, 0});
 		item = i;
 	}
 
