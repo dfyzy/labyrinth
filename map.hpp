@@ -64,7 +64,7 @@ private:
 	SimpleVector cursor;
 
 	inline void fog(SimpleVector position, SimpleVector bounds) {
-		SimpleSprite::Loader({}).position(position).z(-100).bounds(bounds/100).color({0}).load();
+		SimpleSprite::Loader({}).position(position).z(-100).texBounds(bounds).color({0}).load();
 	}
 
 	inline void empty(SimpleVector pos) {
@@ -394,7 +394,8 @@ public:
 
 		empty({0, 0}); empty({1, 0}); empty({2, 0}); empty({3, 0}); empty({4, 0}); empty({6, 0}); empty({7, 0}); empty({3, 1});
 		empty({4, 1}); empty({6, 1}); empty({0, 2}); empty({1, 2}); empty({3, 2}); empty({4, 2}); empty({0, 6}); empty({4, 6}); empty({7, 7});
-
+		fog(SimpleVector(-3, 5)*CELL_SIZE, SimpleVector(5, 11)*CELL_SIZE);
+		fog(SimpleVector(13, 5)*CELL_SIZE, SimpleVector(5, 11)*CELL_SIZE);
 
 		Link* w = wireStart(swtch({5, 2}, {SWITCH_BIG_OFFSET}, true), false, -SWITCH_BIG_OFFSET);
 			w = wire(w, door({5, 2}, NORTH, true), true);
