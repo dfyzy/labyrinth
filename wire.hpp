@@ -13,7 +13,7 @@ public:
 	WireLoader() {}
 
 	BoxObject load(SimpleVector position, bool vert, float length) {
-		return BoxObject(texture, position, 1, vert ? SimpleVector(WIRE_WIDTH, length) : SimpleVector(length, WIRE_WIDTH), {0});
+		return BoxObject(texture, position, 11, vert ? SimpleVector(WIRE_WIDTH, length) : SimpleVector(length, WIRE_WIDTH), {0});
 	}
 
 };
