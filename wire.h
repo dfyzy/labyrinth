@@ -1,19 +1,16 @@
 #ifndef WIRE_H
 #define WIRE_H
 
-#include "link.hpp"
+#include "link.h"
 
 const float WIRE_WIDTH = 3;
 
 class WireLoader {
-private:
-	const SimpleTexture texture;
-
 public:
 	WireLoader() {}
 
-	BoxObject load(SimpleVector position, bool vert, float length) {
-		return BoxObject(texture, position, 11, vert ? SimpleVector(WIRE_WIDTH, length) : SimpleVector(length, WIRE_WIDTH), {0});
+	BoxObject load(sgl::Vector position, bool vert, float length) {
+		return BoxObject({vert ? sgl::Vector(WIRE_WIDTH, length) : sgl::Vector(length, WIRE_WIDTH)}, position, 11, {0});
 	}
 
 };

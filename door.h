@@ -1,21 +1,18 @@
 #ifndef DOOR_H
 #define DOOR_H
 
-#include "link.hpp"
-#include "wall.hpp"
-#include "target.hpp"
+#include "link.h"
+#include "wall.h"
+#include "target.h"
 
 const float DOOR_LENGTH = 60;
 
 class DoorLoader {
-private:
-	const SimpleTexture texture;
-
 public:
 	DoorLoader() {}
 
-	BoxObject load(SimpleVector position, bool vert) {
-		return BoxObject(texture, position, 0, vert ? SimpleVector(WALL_WIDTH, DOOR_LENGTH) : SimpleVector(DOOR_LENGTH, WALL_WIDTH), {0, 0, 1});
+	BoxObject load(sgl::Vector position, bool vert) {
+		return BoxObject({vert ? sgl::Vector(WALL_WIDTH, DOOR_LENGTH) : sgl::Vector(DOOR_LENGTH, WALL_WIDTH)}, position, 0, {0, 0, 1});
 	}
 
 };
@@ -25,7 +22,7 @@ private:
 	bool opened {false};
 
 public:
-	Door(BoxObject box) : Link(box), Target(position, bounds + SimpleVector(6)) {}
+	Door(BoxObject box) : Link(box), Target(position, bounds + sgl::Vector(6)) {}
 
 	void use(Use u, Link* prev) {
 		opened = u == YES;

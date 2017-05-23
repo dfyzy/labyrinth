@@ -1,19 +1,16 @@
 #ifndef ADDER_H
 #define ADDER_H
 
-#include "link.hpp"
+#include "link.h"
 
 const float ADDER_SIZE = 10;
 
 class AdderLoader {
-private:
-	const SimpleTexture texture;
-
 public:
 	AdderLoader() {}
 
-	BoxObject load(SimpleVector position) {
-		return BoxObject(texture, position, 0, {ADDER_SIZE}, {0.6f, 0.3f, 0});
+	BoxObject load(sgl::Vector position) {
+		return BoxObject({ADDER_SIZE}, position, 0, {0.6f, 0.3f, 0});
 	}
 
 };

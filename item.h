@@ -1,8 +1,8 @@
 #ifndef ITEM_H
 #define ITEM_H
 
-#include "boxObject.hpp"
-#include "target.hpp"
+#include "boxObject.h"
+#include "target.h"
 
 enum Item { LAMP, KEY };
 
@@ -10,13 +10,15 @@ const float ITEM_SIZE = 20;
 
 class ItemLoader {
 private:
-	const SimpleTexture texture {"assets/items.png"};
+	sgl::Image* image;
 
 public:
-	ItemLoader() {}
+	ItemLoader() {
+		image = new sgl::Image("assets/items.png", GL_LINEAR);
+	}
 
-	BoxObject load(SimpleVector position) {
-		return BoxObject(texture, position, 0, {ITEM_SIZE}, {1});
+	BoxObject load(sgl::Vector position) {
+		return BoxObject({image, {}, {ITEM_SIZE}}, position, 0, {1});
 	}
 };
 
@@ -26,12 +28,12 @@ private:
 
 public:
 	ItemObject(BoxObject box) : BoxObject(box), Target(position, bounds) {
-		sprite->setTexPosition({ITEM_SIZE, 0});
+		sprite->setTexturePosition({ITEM_SIZE, 0});
 	}
 
 	void change(Item i) {
-		if (i == KEY)	sprite->setTexPosition({ITEM_SIZE, 0});
-		else				sprite->setTexPosition({0, 0});
+		if (i == KEY)	sprite->setTexturePosition({ITEM_SIZE, 0});
+		else				sprite->setTexturePosition({0, 0});
 		item = i;
 	}
 

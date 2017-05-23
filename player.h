@@ -1,15 +1,15 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "map.hpp"
-#include "item.hpp"
+#include "map.h"
+#include "item.h"
 
 const float PLAYER_SPEED = 3.5f;
 
 class Player : public BoxObject {
 private:
 	Map* map;
-	SimpleLight::Source* lamp;
+	sgl::Light::Source* lamp;
 	Item own {LAMP};
 
 public:
@@ -26,12 +26,12 @@ public:
 		own = i;
 	}
 
-	void update(SimpleVector delta) {
+	void update(sgl::Vector delta) {
 		position += delta*PLAYER_SPEED;
 		map->collision(this);
 		updateSprite();
 		lamp->setPosition(position);
-		simpleGL::setCameraPosition(position);
+		sgl::Camera::getInstance()->setPosition(position);
 	}
 
 };

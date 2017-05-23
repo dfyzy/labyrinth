@@ -1,7 +1,5 @@
-#include <simpleGL/simpleMath.hpp>
-
-#include "person.hpp"
-#include "player.hpp"
+#include "person.h"
+#include "player.h"
 
 const float USE_RADIUS = 70;
 
@@ -33,7 +31,7 @@ void checkProximity(float distance, Target* target, bool check) {
 void Switch::collision(BoxObject* box) {
 	BoxObject::collision(box);
 
-	checkProximity(simpleMath::distance(box->getPosition(), position), this, true);
+	checkProximity(sgl::math::distance(box->getPosition(), position), this, true);
 }
 
 void Door::collision(BoxObject* box) {
@@ -43,7 +41,7 @@ void Door::collision(BoxObject* box) {
 		bool current = currentTarget == this;
 		bool last = lastTarget == this;
 
-		checkProximity(simpleMath::distance(box->getPosition(), position), this, last || !opened);
+		checkProximity(sgl::math::distance(box->getPosition(), position), this, last || !opened);
 
 		if (current && currentTarget != this)
 			targ(false);
@@ -52,7 +50,7 @@ void Door::collision(BoxObject* box) {
 
 void ItemObject::collision(BoxObject* box) {
 
-	checkProximity(simpleMath::distance(box->getPosition(), position), this, true);
+	checkProximity(sgl::math::distance(box->getPosition(), position), this, true);
 }
 
 void ItemObject::targ(bool b) {
@@ -86,25 +84,23 @@ void update() {
 	if (w && s)	y = lastY;
 	else			y = w - s;
 
-	player.update(SimpleVector(x, y).normalize());
+	player.update(sgl::Vector(x, y).normalize());
 }
 
 int main() {
-	window = simpleGL::createFullscreenWindow("Title", false, SimpleColor(0.8f));
+	window = sgl::createFullscreenWindow("Title", false, sgl::Color(0.8f));
 
 	glfwSetKeyCallback(window, keyCallback);
-
-	simpleGL::setTextureFiltering(GL_LINEAR);
 
 	Map map;
 
 	PersonLoader persLoader;
 	player = Player(persLoader.load({CELL_SIZE*5, 0}), &map);
 
-	//simpleGL::setCameraPosition({CELL_SIZE*5});
-	//simpleGL::setCameraScale(768/(11*CELL_SIZE));
+	//sgl::setCameraPosition({CELL_SIZE*5});
+	//sgl::setCameraScale(768/(11*CELL_SIZE));
 
-	simpleGL::setUpdate(update);
+	sgl::setUpdate(update);
 
-	simpleGL::draw();
+	sgl::draw();
 }
