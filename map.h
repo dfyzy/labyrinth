@@ -3,10 +3,9 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include <simpleGL/light.h>
+#include <simpleGL/lighting.h>
 #include <simpleGL/shaderData.h>
 
-#include "wall.h"
 #include "door.h"
 #include "switch.h"
 #include "wire.h"
@@ -14,6 +13,9 @@
 #include "item.h"
 
 const float HALF_PI = 1.57079632679f;
+
+const float WALL_WIDTH = 13;
+const float DOOR_LENGTH = 60;
 
 const float CELL_SIZE = 250;
 const float ROOM_MARGIN = 10;
@@ -52,11 +54,9 @@ class Map {
 private:
 	enum Direction { NORTH, WEST, SOUTH, EAST };
 
-	sgl::Light* light = new sgl::Light(nullptr, sgl::Light::C, {5*CELL_SIZE}, -50, 11*CELL_SIZE, 11*CELL_SIZE, {0});
+	sgl::Lighting* light = new sgl::Lighting(sgl::Data().position({5*CELL_SIZE}), -50, 11*CELL_SIZE, 11*CELL_SIZE, {0});
 	GLuint lampShader = sgl::loadShaderSource(sgl::shaderData::getLightingPow2Fragment(), GL_FRAGMENT_SHADER);
 
-	WallLoader wallLoader;
-	DoorLoader doorLoader;
 	SwitchLoader switchLoader;
 	WireLoader wireLoader;
 	AdderLoader adderLoader;
@@ -66,8 +66,14 @@ private:
 
 	sgl::Vector cursor;
 
+	inline void wall(sgl::Vector position, bool vert, float length) {
+		sgl::Vector bounds{vert ? sgl::Vector(WALL_WIDTH, length) : sgl::Vector(length, WALL_WIDTH)};
+		objects.push_back(new BoxObject(bounds, position, 10, {0.2f}));
+		new sgl::Lighting::Shadow(light, bounds, sgl::Data().position(position));
+	}
+
 	inline void fog(sgl::Vector position, sgl::Vector bounds) {
-		new sgl::Sprite(sgl::Sprite::Data(bounds).position(position).z(-100).color({0}));
+		new sgl::Sprite(bounds, sgl::Data().position(position).color({0}), -100);
 	}
 
 	inline void empty(sgl::Vector pos) {
@@ -80,15 +86,15 @@ private:
 		bool vert = dir == NORTH || dir == SOUTH;
 		float rot = HALF_PI*dir;
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(0, -ROOM_OFFSET).rotate(rot), !vert, REAL_CELL_SIZE)));
+		wall(pos + sgl::Vector(-ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH);
+		wall(pos + sgl::Vector(ROOM_OFFSET, 0).rotate(rot), vert, REAL_CELL_SIZE - 2*WALL_WIDTH);
+		wall(pos + sgl::Vector(0, -ROOM_OFFSET).rotate(rot), !vert, REAL_CELL_SIZE);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN)));
+		wall(pos + sgl::Vector(-SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN);
+		wall(pos + sgl::Vector(SIDE_OFFSET, ROOM_OFFSET).rotate(rot), !vert, SIDE_LEN);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN)));
+		wall(pos + sgl::Vector(-CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN);
+		wall(pos + sgl::Vector(CORR_OFFSET, OFF_Y).rotate(rot), vert, ROOM_MARGIN);
 
 		fog(pos + sgl::Vector(OFF_Y, 0).rotate(rot), sgl::Vector(ROOM_MARGIN, CELL_SIZE).rotate(rot));
 		fog(pos + sgl::Vector(-OFF_Y, 0).rotate(rot), sgl::Vector(ROOM_MARGIN, CELL_SIZE).rotate(rot));
@@ -100,18 +106,18 @@ private:
 	void room2horiz(sgl::Vector pos) {
 		pos *= CELL_SIZE;
 
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH)));
+		wall(pos - sgl::Vector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH);
+		wall(pos + sgl::Vector(ROOM_OFFSET, 0), true, REAL_CELL_SIZE - 2*WALL_WIDTH);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN)));
+		wall(pos - sgl::Vector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN);
+		wall(pos - sgl::Vector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN);
+		wall(pos + sgl::Vector(-SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN);
+		wall(pos + sgl::Vector(SIDE_OFFSET, ROOM_OFFSET), false, SIDE_LEN);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN)));
+		wall(pos - sgl::Vector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN);
+		wall(pos - sgl::Vector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN);
+		wall(pos + sgl::Vector(-CORR_OFFSET, OFF_Y), true, ROOM_MARGIN);
+		wall(pos + sgl::Vector(CORR_OFFSET, OFF_Y), true, ROOM_MARGIN);
 
 		fog(pos + sgl::Vector(OFF_Y, 0), {ROOM_MARGIN, CELL_SIZE});
 		fog(pos + sgl::Vector(-OFF_Y, 0), {ROOM_MARGIN, CELL_SIZE});
@@ -127,10 +133,10 @@ private:
 		bool vert = dir == NORTH || dir == SOUTH;
 		float rot = HALF_PI*dir;
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN)));
+		wall(pos + sgl::Vector(CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN);
+		wall(pos + sgl::Vector(-CORR_OFFSET, CORR_BIG_OFFSET).rotate(rot), vert, CORR_BIG_LEN);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(0, -CORR_OFFSET).rotate(rot), !vert, DOOR_LENGTH + 2*WALL_WIDTH)));
+		wall(pos + sgl::Vector(0, -CORR_OFFSET).rotate(rot), !vert, DOOR_LENGTH + 2*WALL_WIDTH);
 
 		fog(pos + sgl::Vector(FOG_OFFSET, 0).rotate(rot), sgl::Vector(FOG_LEN, CELL_SIZE).rotate(rot));
 		fog(pos + sgl::Vector(-FOG_OFFSET, 0).rotate(rot), sgl::Vector(FOG_LEN, CELL_SIZE).rotate(rot));
@@ -154,8 +160,8 @@ private:
 			fogBounds = sgl::Vector(CELL_SIZE, FOG_LEN);
 		}
 
-		objects.push_back(new BoxObject(wallLoader.load(pos - offset, vert, CELL_SIZE)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + offset, vert, CELL_SIZE)));
+		wall(pos - offset, vert, CELL_SIZE);
+		wall(pos + offset, vert, CELL_SIZE);
 
 		fog(pos - fogOff, fogBounds);
 		fog(pos + fogOff, fogBounds);
@@ -170,11 +176,11 @@ private:
 			if (dir != WEST)	factor.x = -1;
 		}
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + factor*sgl::Vector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + factor*sgl::Vector(-CORR_BIG_OFFSET, -CORR_OFFSET), false, CORR_BIG_LEN)));
+		wall(pos + factor*sgl::Vector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN);
+		wall(pos + factor*sgl::Vector(-CORR_BIG_OFFSET, -CORR_OFFSET), false, CORR_BIG_LEN);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + factor*sgl::Vector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + factor*sgl::Vector(CORR_OFFSET, CORR_BIG_OFFSET), true, CORR_BIG_LEN)));
+		wall(pos + factor*sgl::Vector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN);
+		wall(pos + factor*sgl::Vector(CORR_OFFSET, CORR_BIG_OFFSET), true, CORR_BIG_LEN);
 
 		fog(pos + factor*sgl::Vector(-FOG_OFFSET, FOG_OFFSET), {FOG_LEN});
 		fog(pos + factor*sgl::Vector(FOG_OFFSET, 0), {FOG_LEN, CELL_SIZE});
@@ -187,13 +193,13 @@ private:
 		bool vert = dir == NORTH || dir == SOUTH;
 		float rot = HALF_PI*dir;
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(0, CORR_OFFSET).rotate(rot), !vert, CELL_SIZE)));
+		wall(pos + sgl::Vector(0, CORR_OFFSET).rotate(rot), !vert, CELL_SIZE);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN)));
+		wall(pos + sgl::Vector(CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN);
+		wall(pos + sgl::Vector(-CORR_SMALL_OFFSET, -CORR_OFFSET).rotate(rot), !vert, CORR_SMALL_LEN);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN)));
+		wall(pos + sgl::Vector(CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN);
+		wall(pos + sgl::Vector(-CORR_OFFSET, -CORR_SMALL_OFFSET).rotate(rot), vert, CORR_SMALL_LEN);
 
 		fog(pos + sgl::Vector(FOG_OFFSET, -FOG_OFFSET).rotate(rot), {FOG_LEN});
 		fog(pos + sgl::Vector(-FOG_OFFSET, -FOG_OFFSET).rotate(rot), {FOG_LEN});
@@ -203,15 +209,15 @@ private:
 	void corridor4(sgl::Vector pos) {
 		pos *= CELL_SIZE;
 
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos + sgl::Vector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN)));
+		wall(pos + sgl::Vector(CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN);
+		wall(pos + sgl::Vector(CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN);
+		wall(pos + sgl::Vector(-CORR_SMALL_OFFSET, -CORR_OFFSET), false, CORR_SMALL_LEN);
+		wall(pos + sgl::Vector(-CORR_SMALL_OFFSET, CORR_OFFSET), false, CORR_SMALL_LEN);
 
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
-		objects.push_back(new BoxObject(wallLoader.load(pos - sgl::Vector(-CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN)));
+		wall(pos - sgl::Vector(CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN);
+		wall(pos - sgl::Vector(-CORR_OFFSET, CORR_SMALL_OFFSET), true, CORR_SMALL_LEN);
+		wall(pos - sgl::Vector(CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN);
+		wall(pos - sgl::Vector(-CORR_OFFSET, -CORR_SMALL_OFFSET), true, CORR_SMALL_LEN);
 
 		fog(pos + sgl::Vector(FOG_OFFSET, FOG_OFFSET), {FOG_LEN});
 		fog(pos + sgl::Vector(FOG_OFFSET, -FOG_OFFSET), {FOG_LEN});
@@ -223,8 +229,21 @@ private:
 		pos *= CELL_SIZE;
 
 		bool vert = dir == WEST || dir == EAST;
-		Door* res = new Door(doorLoader.load(pos + sgl::Vector(0, longOffset ? ROOM_OFFSET : CORR_OFFSET).rotate(HALF_PI*dir), vert));
+
+		sgl::Vector bounds {vert ? sgl::Vector(WALL_WIDTH, DOOR_LENGTH) : sgl::Vector(DOOR_LENGTH, WALL_WIDTH)};
+
+		Door* res = new Door(
+			BoxObject(
+				bounds,
+				pos + sgl::Vector(0, longOffset ? ROOM_OFFSET : CORR_OFFSET).rotate(HALF_PI*dir),
+				0,
+				{0, 0, 1}
+			)
+		);
 		objects.push_back(res);
+
+		new sgl::Lighting::Shadow(light, bounds, sgl::Data().parent(res->getSprite()));
+
 		return res;
 	}
 
@@ -513,8 +532,8 @@ public:
 			wire(w, door({10, 8}, NORTH, false), true);
 	}
 
-	sgl::Light::Source* torch(sgl::Vector pos, float brightness) {
-		auto t = new sgl::Light::Source(light, nullptr, sgl::Light::C, pos*CELL_SIZE, {brightness}, 0, {0.65f, 0.5f, 0.3f});
+	sgl::Lighting::Source* torch(sgl::Vector pos, float brightness) {
+		auto t = new sgl::Lighting::Source(light, {brightness}, sgl::Data().position(pos*CELL_SIZE).color({0.65f, 0.5f, 0.3f}));
 		t->setFragmentShader(lampShader);
 		return t;
 	}

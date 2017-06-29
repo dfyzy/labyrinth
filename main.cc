@@ -88,7 +88,7 @@ void update() {
 }
 
 int main() {
-	window = sgl::createFullscreenWindow("Title", false, sgl::Color(0.8f));
+	window = sgl::loadFullscreenWindow("Title", false, sgl::Color(0.8f));
 
 	glfwSetKeyCallback(window, keyCallback);
 

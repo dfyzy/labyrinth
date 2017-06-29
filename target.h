@@ -9,7 +9,7 @@ private:
 
 public:
 	Target(sgl::Vector position, sgl::Vector bounds) {
-		targetSprt = new sgl::Sprite(sgl::Sprite::Data(bounds).position(position).z(5).color({1}));
+		targetSprt = new sgl::Sprite(bounds, sgl::Data().position(position).color({1}), 5);
 		targetSprt->setEnabled(false);
 	}
 

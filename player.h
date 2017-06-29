@@ -9,7 +9,7 @@ const float PLAYER_SPEED = 3.5f;
 class Player : public BoxObject {
 private:
 	Map* map;
-	sgl::Light::Source* lamp;
+	sgl::Lighting::Source* lamp;
 	Item own {LAMP};
 
 public:

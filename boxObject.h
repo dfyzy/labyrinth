@@ -13,10 +13,12 @@ protected:
 
 public:
 	BoxObject(sgl::Texture texture, sgl::Vector position, int z, sgl::Color color) : position(position), bounds(texture.getBounds()) {
-		sprite = new sgl::Sprite(sgl::Sprite::Data(texture).position(position).z(z).color(color));
+		sprite = new sgl::Sprite(texture, sgl::Data().position(position).color(color), z);
 	}
 
 	BoxObject() {}
+
+	sgl::Sprite* getSprite() const { return sprite; }
 
 	sgl::Vector getPosition() const { return position; }
 	void setPosition(sgl::Vector sv) { position = sv; updateSprite(); }

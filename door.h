@@ -2,20 +2,7 @@
 #define DOOR_H
 
 #include "link.h"
-#include "wall.h"
 #include "target.h"
-
-const float DOOR_LENGTH = 60;
-
-class DoorLoader {
-public:
-	DoorLoader() {}
-
-	BoxObject load(sgl::Vector position, bool vert) {
-		return BoxObject({vert ? sgl::Vector(WALL_WIDTH, DOOR_LENGTH) : sgl::Vector(DOOR_LENGTH, WALL_WIDTH)}, position, 0, {0, 0, 1});
-	}
-
-};
 
 class Door : public Link, public Target {
 private:
